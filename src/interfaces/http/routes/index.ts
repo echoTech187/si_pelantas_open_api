@@ -408,8 +408,8 @@ apiRouter.post(
 // Autentikasi ke tabel `school_bk_accounts` (Terkunci ketat per `school_id`)
 // ============================================================================
 
-// Endpoint Terotentikasi Daftar Akun Guru BK Sekolah Binaan Mojokerto
-apiRouter.get(['/school-bk/auth/schools', '/schools/bk-accounts'], authenticateAnyJwt, async (req: Request, res: Response) => {
+// Endpoint Publik Daftar Akun Guru BK Sekolah Binaan Mojokerto (untuk dropdown login BK & aplikasi)
+apiRouter.get(['/school-bk/auth/schools', '/schools/bk-accounts'], async (req: Request, res: Response) => {
   try {
     const result = await dbQuery(
       `SELECT
@@ -580,7 +580,7 @@ apiRouter.post('/school-bk/auth/login', async (req: Request, res: Response) => {
           username: bkTeacher.username,
           fullName: bkTeacher.full_name,
           phoneWa: bkTeacher.phone_wa,
-          isPrimaryPic: bkTeacher.is_primary_pic,
+          isPrimaryPic: bkTeacher.is_primary_pic == 1 || bkTeacher.is_primary_pic === true || bkTeacher.is_primary_pic === '1',
           schoolId: bkTeacher.school_id,
           schoolName: bkTeacher.school_name,
           npsn: bkTeacher.npsn,
