@@ -7,6 +7,9 @@ import { apiRouter } from './interfaces/http/routes';
 
 export const app = express();
 
+// Trust proxy for Vercel Serverless environment
+app.set('trust proxy', 1);
+
 // 1. Security Headers (Helmet) & CORS
 app.use(helmet());
 app.use(
@@ -34,7 +37,7 @@ app.use('/api/', apiLimiter);
 app.use(express.json({ limit: '2mb' }));
 
 // 4. Healthcheck & Routes
-app.get('/', (_req, res) => {
+app.all(['/', '/api', '/api/'], (_req, res) => {
   res.json({
     status: 'ONLINE',
     service: 'SI-PELANTAS KAMSEL MOJOKERTO REST API',
@@ -60,3 +63,29 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/v1', apiRouter);
+
+// 5. Fallback 404 Handler for undefined API routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Endpoint ${req.method} ${req.url} tidak ditemukan di server SI-PELANTAS Open API.`,
+    availableEndpoints: {
+      root: '/',
+      health: '/health',
+      policeLogin: '/api/v1/police/auth/login',
+      bkLogin: '/api/v1/school-bk/auth/login',
+      violationTypes: '/api/v1/police/violation-types',
+      schools: '/api/v1/police/schools',
+    },
+  });
+});
+
+// 6. Global Error Handler
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Unhandled server error:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Terjadi kesalahan internal pada server.',
+    error: err?.message || 'Internal Server Error',
+  });
+});
