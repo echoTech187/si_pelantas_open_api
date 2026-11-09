@@ -1,10 +1,13 @@
 {
   "version": 2,
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
-      "destination": "/api"
-    },
+      "destination": "/api",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/health",
       "destination": "/api"
