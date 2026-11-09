@@ -8,6 +8,7 @@ import {
   authenticatePoliceJwt,
   authorizePoliceRoles,
   authenticateSchoolBkJwt,
+  authenticateAnyJwt,
 } from '../middlewares/authMiddleware';
 import { CreateViolationRequestDtoSchema } from '../../../application/dtos/ViolationDto';
 import { CreateCounselingVisitDtoSchema } from '../../../application/dtos/CounselingDto';
@@ -101,8 +102,8 @@ apiRouter.post('/police/auth/login', async (req: Request, res: Response) => {
   }
 });
 
-// Master Tipe Pelanggaran Lalu Lintas (Diambil langsung dari Database PostgreSQL: violation_master_types)
-apiRouter.get('/police/violation-types', async (_req: Request, res: Response) => {
+// Master Tipe Pelanggaran Lalu Lintas (Khusus App Polri - Memerlukan Login)
+apiRouter.get('/police/violation-types', authenticatePoliceJwt, async (_req: Request, res: Response) => {
   try {
     const result = await dbQuery(
       `SELECT id, code, title, uu_llaj_article, severity_weight, max_fine_idr
@@ -119,8 +120,8 @@ apiRouter.get('/police/violation-types', async (_req: Request, res: Response) =>
   }
 });
 
-// Radar & Daftar Sekolah Wilayah Mojokerto untuk Aplikasi Polri (POLANTAS & UNIT_KAMSEL)
-apiRouter.get('/police/schools', async (_req: Request, res: Response) => {
+// Radar & Daftar Sekolah Wilayah Mojokerto untuk Aplikasi Polri (Khusus App Polri - Memerlukan Login)
+apiRouter.get('/police/schools', authenticatePoliceJwt, async (_req: Request, res: Response) => {
   const result = await dbQuery(
     `SELECT
        s.id AS "schoolId",
@@ -407,8 +408,8 @@ apiRouter.post(
 // Autentikasi ke tabel `school_bk_accounts` (Terkunci ketat per `school_id`)
 // ============================================================================
 
-// Endpoint Publik Daftar Akun Guru BK Sekolah Binaan Mojokerto
-apiRouter.get(['/school-bk/auth/schools', '/schools/bk-accounts'], async (req: Request, res: Response) => {
+// Endpoint Terotentikasi Daftar Akun Guru BK Sekolah Binaan Mojokerto
+apiRouter.get(['/school-bk/auth/schools', '/schools/bk-accounts'], authenticateAnyJwt, async (req: Request, res: Response) => {
   try {
     const result = await dbQuery(
       `SELECT

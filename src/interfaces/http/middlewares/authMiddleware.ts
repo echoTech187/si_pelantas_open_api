@@ -107,3 +107,38 @@ export function authenticateSchoolBkJwt(req: Request, res: Response, next: NextF
     });
   }
 }
+
+/**
+ * Guard untuk endpoint yang dapat diakses oleh personel Polri maupun Guru BK yang telah terautentikasi
+ */
+export function authenticateAnyJwt(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({
+      success: false,
+      message: 'Akses ditolak: Token otentikasi tidak ditemukan. Silakan login terlebih dahulu.',
+    });
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as any;
+    if (decoded.institution === 'POLRI') {
+      req.policeUser = decoded;
+      return next();
+    } else if (decoded.institution === 'SCHOOL_BK') {
+      req.bkUser = decoded;
+      return next();
+    }
+    res.status(403).json({
+      success: false,
+      message: 'Akses ditolak: Institusi token tidak dikenali',
+    });
+  } catch {
+    res.status(401).json({
+      success: false,
+      message: 'Sesi login tidak valid atau telah berakhir',
+    });
+  }
+}
