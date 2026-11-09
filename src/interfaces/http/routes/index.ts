@@ -178,7 +178,7 @@ apiRouter.get('/police/schools/:schoolId/violations', authenticatePoliceJwt, asy
          v.evidence_photo_url AS "evidencePhotoUrl",
          pa.full_name AS "polantasOfficer",
          COALESCE(
-           (SELECT string_agg(vmt.title, ', ')
+           (SELECT GROUP_CONCAT(vmt.title SEPARATOR ', ')
             FROM traffic_violation_items tvi
             JOIN violation_master_types vmt ON vmt.id = tvi.violation_type_id
             WHERE tvi.violation_id = v.id),
@@ -296,7 +296,7 @@ apiRouter.post(
              v.incident_location AS "incidentLocation",
              v.incident_at AS "incidentAt",
              COALESCE(
-               (SELECT string_agg(vmt.title, ', ')
+               (SELECT GROUP_CONCAT(vmt.title SEPARATOR ', ')
                 FROM traffic_violation_items tvi
                 JOIN violation_master_types vmt ON vmt.id = tvi.violation_type_id
                 WHERE tvi.violation_id = v.id),
@@ -622,7 +622,8 @@ apiRouter.post('/police/auth/logout', authenticatePoliceJwt, async (req: Request
 
 // Ringkasan Dashboard & Daftar Pelanggaran Siswa Khusus Sekolah Tempat Guru BK Bertugas
 apiRouter.get('/school-bk/dashboard', authenticateSchoolBkJwt, async (req: Request, res: Response) => {
-  const schoolId = req.bkUser!.schoolId;
+  try {
+    const schoolId = req.bkUser!.schoolId;
 
   const [schoolSummaryRes, violationsRes, visitsRes, pendingFeedbackRes, inspectionsCountRes] = await Promise.all([
     dbQuery(
@@ -654,9 +655,9 @@ apiRouter.get('/school-bk/dashboard', authenticateSchoolBkJwt, async (req: Reque
          v.incident_location AS "incidentLocation",
          v.officer_notes AS "officerNotes",
          v.incident_at AS "incidentAt",
-         pa.rank_title || ' ' || pa.full_name AS "polantasOfficer",
+         CONCAT(pa.rank_title, ' ', pa.full_name) AS "polantasOfficer",
          COALESCE(
-           (SELECT string_agg(vmt.title, ', ')
+           (SELECT GROUP_CONCAT(vmt.title SEPARATOR ', ')
             FROM traffic_violation_items tvi
             JOIN violation_master_types vmt ON vmt.id = tvi.violation_type_id
             WHERE tvi.violation_id = v.id),
@@ -679,7 +680,7 @@ apiRouter.get('/school-bk/dashboard', authenticateSchoolBkJwt, async (req: Reque
          kv.kamsel_directive_summary AS "kamselDirectiveSummary",
          kv.school_evaluation_result AS "schoolEvaluationResult",
          kv.school_follow_up_commitment AS "schoolFollowUpCommitment",
-         pa.rank_title || ' ' || pa.full_name AS "kamselOfficerName"
+         CONCAT(pa.rank_title, ' ', pa.full_name) AS "kamselOfficerName"
        FROM kamsel_counseling_visits kv
        JOIN police_accounts pa ON pa.id = kv.kamsel_account_id
        WHERE kv.school_id = $1
@@ -750,6 +751,10 @@ apiRouter.get('/school-bk/dashboard', authenticateSchoolBkJwt, async (req: Reque
       } : null,
     },
   });
+} catch (err: any) {
+  console.error('Error in /school-bk/dashboard:', err);
+  res.status(500).json({ success: false, message: err?.message ?? 'Gagal memuat dashboard BK' });
+}
 });
 
 
@@ -763,14 +768,14 @@ apiRouter.get('/police/reports/export-csv', authenticatePoliceJwt, async (req: R
   const result = await dbQuery(
     `SELECT
        v.ticket_number AS "No_Tilang",
-       to_char(v.incident_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI') AS "Waktu_Kejadian",
+       DATE_FORMAT(v.incident_at, '%Y-%m-%d %H:%i') AS "Waktu_Kejadian",
        s.name AS "Nama_Sekolah",
        d.name AS "Kecamatan",
        st.full_name AS "Nama_Siswa",
        st.class_name AS "Kelas",
        v.vehicle_plate_number AS "Plat_Nomor",
        COALESCE(
-         (SELECT string_agg(vmt.title, '; ')
+         (SELECT GROUP_CONCAT(vmt.title SEPARATOR '; ')
           FROM traffic_violation_items tvi
           JOIN violation_master_types vmt ON vmt.id = tvi.violation_type_id
           WHERE tvi.violation_id = v.id),
@@ -778,7 +783,7 @@ apiRouter.get('/police/reports/export-csv', authenticatePoliceJwt, async (req: R
        ) AS "Jenis_Pelanggaran",
        c.cycle_number AS "Siklus_Ke",
        c.status AS "Status_Kamsel_Sekolah",
-       pa.rank_title || ' ' || pa.full_name AS "Petugas_Polantas"
+       CONCAT(pa.rank_title, ' ', pa.full_name) AS "Petugas_Polantas"
      FROM traffic_violations v
      JOIN schools s ON s.id = v.school_id
      JOIN districts d ON d.id = s.district_id
@@ -812,19 +817,19 @@ apiRouter.get('/school-bk/reports/export-csv', authenticateSchoolBkJwt, async (r
   const result = await dbQuery(
     `SELECT
        v.ticket_number AS "No_Tilang",
-       to_char(v.incident_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI') AS "Waktu_Kejadian",
+       DATE_FORMAT(v.incident_at, '%Y-%m-%d %H:%i') AS "Waktu_Kejadian",
        s.name AS "Nama_Sekolah",
        st.full_name AS "Nama_Siswa",
        st.class_name AS "Kelas",
        v.vehicle_plate_number AS "Plat_Nomor",
        COALESCE(
-         (SELECT string_agg(vmt.title, '; ')
+         (SELECT GROUP_CONCAT(vmt.title SEPARATOR '; ')
           FROM traffic_violation_items tvi
           JOIN violation_master_types vmt ON vmt.id = tvi.violation_type_id
           WHERE tvi.violation_id = v.id),
          '-'
        ) AS "Jenis_Pelanggaran",
-       pa.rank_title || ' ' || pa.full_name AS "Petugas_Penindak"
+       CONCAT(pa.rank_title, ' ', pa.full_name) AS "Petugas_Penindak"
      FROM traffic_violations v
      JOIN schools s ON s.id = v.school_id
      JOIN students st ON st.id = v.student_id

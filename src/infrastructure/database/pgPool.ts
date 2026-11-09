@@ -50,6 +50,12 @@ export async function executeQuery<T = any>(
   // 4. ANY($1) -> IN (?)
   sql = sql.replace(/=\s*ANY\s*\(\s*\$(\d+)\s*\)/gi, 'IN ($$1)');
 
+  // 4b. string_agg(col, ', ') -> GROUP_CONCAT(col SEPARATOR ', ')
+  sql = sql.replace(/string_agg\s*\(\s*([^,]+?)\s*,\s*('[^']*')\s*\)/gi, 'GROUP_CONCAT($1 SEPARATOR $2)');
+
+  // 4c. Postgres to_char AT TIME ZONE -> DATE_FORMAT
+  sql = sql.replace(/to_char\s*\(\s*([^,]+?)\s*AT\s+TIME\s+ZONE\s+'[^']+'\s*,\s*('[^']*')\s*\)/gi, "DATE_FORMAT($1, '%Y-%m-%d %H:%i')");
+
   // 5. ON CONFLICT DO NOTHING -> INSERT IGNORE
   if (/ON\s+CONFLICT\s+DO\s+NOTHING/i.test(sql)) {
     sql = sql.replace(/INSERT\s+INTO/i, 'INSERT IGNORE INTO');
