@@ -43,8 +43,10 @@ app.all(['/', '/api', '/api/'], (_req, res) => {
     service: 'SI-PELANTAS KAMSEL MOJOKERTO REST API',
     endpoints: {
       health: '/health',
-      policeLogin: '/api/v1/police/auth/login',
-      bkLogin: '/api/v1/school-bk/auth/login',
+      policeAuth: '/api/v1/police/auth/login',
+      bkAuth: '/api/v1/school-bk/auth/login',
+      violationTypes: '/api/v1/police/violation-types',
+      schools: '/api/v1/police/schools',
     },
     database: 'TiDB Cloud Connected',
     version: '1.0.0',
