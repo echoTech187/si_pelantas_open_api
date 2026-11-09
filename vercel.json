@@ -2,7 +2,15 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/((?!public).*)",
+      "source": "/",
+      "destination": "/api"
+    },
+    {
+      "source": "/health",
+      "destination": "/api"
+    },
+    {
+      "source": "/api/(.*)",
       "destination": "/api"
     }
   ],
@@ -18,4 +26,3 @@
     "JWT_REFRESH_SECRET": "sipelantas_mojokerto_kamsel_jwt_secret_refresh_2026_polres"
   }
 }
-
