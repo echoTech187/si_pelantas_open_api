@@ -15,6 +15,10 @@
     {
       "source": "/api/(.*)",
       "destination": "/api"
+    },
+    {
+      "source": "/download/(.*)",
+      "destination": "/api"
     }
   ],
   "env": {

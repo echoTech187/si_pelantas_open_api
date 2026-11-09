@@ -48,10 +48,25 @@ app.all(['/', '/api', '/api/'], (_req, res) => {
       violationTypes: '/api/v1/police/violation-types',
       schools: '/api/v1/police/schools',
     },
+    apkDownloads: {
+      polriApk: 'https://si-pelantas-open-api.vercel.app/downloads/sipelantas-polri.apk',
+      bkApk: 'https://si-pelantas-open-api.vercel.app/downloads/sipelantas-bk.apk',
+      shortcutPolri: 'https://si-pelantas-open-api.vercel.app/download/polri',
+      shortcutBk: 'https://si-pelantas-open-api.vercel.app/download/bk',
+    },
     database: 'TiDB Cloud Connected',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Shortcut redirect for APK downloads
+app.get('/download/polri', (_req, res) => {
+  res.redirect('/downloads/sipelantas-polri.apk');
+});
+
+app.get('/download/bk', (_req, res) => {
+  res.redirect('/downloads/sipelantas-bk.apk');
 });
 
 app.get('/health', (_req, res) => {
