@@ -5,6 +5,35 @@
       "source": "/",
       "destination": "/api",
       "permanent": false
+    },
+    {
+      "source": "/download/bk",
+      "destination": "/downloads/sipelantas-bk.apk",
+      "permanent": false
+    },
+    {
+      "source": "/download/polri",
+      "destination": "/downloads/sipelantas-polri.apk",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/downloads/(.*)",
+      "headers": [
+        {
+          "key": "Content-Disposition",
+          "value": "attachment"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
   ],
   "rewrites": [
